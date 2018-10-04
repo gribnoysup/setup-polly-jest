@@ -1,0 +1,9 @@
+node_modules
+lib
+
+*.tmp
+*.log
+
+package-lock.json
+
+coverage

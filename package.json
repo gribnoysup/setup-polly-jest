@@ -1,0 +1,47 @@
+{
+  "name": "@gribnoysup/setup-polly-jest",
+  "version": "0.1.0",
+  "description": "Setup helper for PollyJS when using in jest/jasmine test environment",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src --out-dir lib",
+    "test": "npm run build && jest",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "LICENSE",
+    "README.md",
+    "index.js",
+    "lib"
+  ],
+  "keywords": [
+    "polly",
+    "pollyjs",
+    "jest",
+    "jasmine",
+    "test",
+    "testing",
+    "mock",
+    "helper"
+  ],
+  "author": "Sergey Petushkov <petushkov.sergey@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "@pollyjs/adapter-fetch": "^1.2.0",
+    "@pollyjs/core": "^1.2.0",
+    "@pollyjs/persister-fs": "^1.2.0",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "husky": "^1.1.0",
+    "jest": "^23.6.0",
+    "lint-staged": "^7.3.0",
+    "node-fetch": "^2.2.0",
+    "prettier": "^1.14.3"
+  },
+  "peerDependencies": {
+    "@pollyjs/core": "*"
+  }
+}
