@@ -25,7 +25,8 @@ const POLLY_SET_UP = Symbol();
  *
  * @example
  *
- * // For a real world example, check out tests in this repo
+ * // For a real world example, check out README or tests in
+ * // this repo
  *
  * const { setupPolly } = require('setup-polly-jest');
  *
@@ -63,51 +64,73 @@ export const setupPolly = (
 
   const jasmineEnv = getJasmineEnv(jasmine);
   const test = jasmineEnv.it;
+  const testOnly = jasmineEnv.fit;
 
-  if (jasmineEnv.it[POLLY_SET_UP] === true) {
+  if (
+    jasmineEnv.it[POLLY_SET_UP] === true ||
+    jasmineEnv.fit[POLLY_SET_UP] === true
+  ) {
     throw new Error(
       'Seems like polly is set up already. ' +
         'Please, call context.clearPolly to unset polly before setting it up again'
     );
   }
 
-  // Overwrite `it` method to get access to test name
-  jasmineEnv.it = function it() {
-    const testCase = test.apply(jasmineEnv, arguments);
+  // Factory that will create test function
+  // to proxy original test functions from
+  // jasmine env
+  const createTestFn = testFn => (...args) => {
+    const testCase = testFn.apply(jasmineEnv, args);
     const hooks = testCase.beforeAndAfterFns;
 
     // Overwrite `beforeAndAfterFns` to add additional before/after hooks
     // to all tests
-    testCase.beforeAndAfterFns = function beforeAndAfterFns() {
-      const { befores, afters } = hooks.apply(testCase, arguments);
+    testCase.beforeAndAfterFns = (...args) => {
+      const { befores, afters } = hooks.apply(testCase, args);
 
-      const before = function before(done) {
+      const before = done => {
         polly = new Polly(testCase.getFullName(), options);
-        done();
+        done && done();
       };
 
-      const after = async function after(done) {
-        await polly.stop();
-        polly = null;
-        done();
+      const after = async done => {
+        // As the clearPolly method can be called at this point
+        // we need to check if polly is still there
+        if (polly && typeof polly.stop === 'function') {
+          await polly.stop();
+          polly = null;
+        }
+
+        done && done();
       };
 
       return {
         // Before hook will be the first one to execute
         befores: [{ fn: before }].concat(befores),
         // After hook will always be the last one
-        afters: afters.concat({ fn: after }),
+        afters: afters.concat({ fn: after })
       };
     };
 
     return testCase;
   };
 
+  jasmineEnv.it = createTestFn(test);
   jasmineEnv.it[POLLY_SET_UP] = true;
 
-  const clearPolly = () => {
-    polly = null;
+  jasmineEnv.fit = createTestFn(testOnly);
+  jasmineEnv.fit[POLLY_SET_UP] = true;
+
+  const clearPolly = async done => {
+    if (polly && typeof polly.stop === 'function') {
+      await polly.stop();
+      polly = null;
+    }
+
     jasmineEnv.it = test;
+    jasmineEnv.fit = testOnly;
+
+    done && done();
   };
 
   if (context && typeof context.afterAll === 'function') {
@@ -118,6 +141,6 @@ export const setupPolly = (
     get polly() {
       return polly;
     },
-    clearPolly,
+    clearPolly
   };
 };

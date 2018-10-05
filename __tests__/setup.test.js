@@ -1,4 +1,4 @@
-import { setupPolly } from "../lib/setup";
+import { setupPolly } from '../lib/setup';
 
 class PollyMock {
   constructor(name, options) {
@@ -24,13 +24,13 @@ class JasmineMock {
   }
 }
 
-describe("setupPolly", () => {
+describe('setupPolly', () => {
   afterEach(() => {
     testMock.mockClear();
     beforeAndAfterFnsMock.mockClear();
   });
 
-  it("should throw if jasmine env does not exist", () => {
+  it('should throw if jasmine env does not exist', () => {
     expect(() =>
       setupPolly(PollyMock, {}, null, {})
     ).toThrowErrorMatchingInlineSnapshot(
@@ -38,7 +38,7 @@ describe("setupPolly", () => {
     );
   });
 
-  it("should throw if polly setupPolly is called twice", () => {
+  it('should throw if polly setupPolly is called twice', () => {
     const jasmine = new JasmineMock();
 
     setupPolly(PollyMock, {}, jasmine, {});
@@ -50,7 +50,7 @@ describe("setupPolly", () => {
     );
   });
 
-  it("should override jasmine `it` method", () => {
+  it('should override jasmine `it` method', () => {
     const jasmine = new JasmineMock();
 
     expect(jasmine.getEnv().it).toBe(testMock);
@@ -60,23 +60,23 @@ describe("setupPolly", () => {
     expect(jasmine.getEnv().it).not.toBe(testMock);
   });
 
-  it("should returned modified test case after setupPolly is called", () => {
+  it('should returned modified test case after setupPolly is called', () => {
     const jasmine = new JasmineMock();
 
     setupPolly(PollyMock, {}, jasmine, {});
 
-    const testCase = jasmine.getEnv().it("test1");
+    const testCase = jasmine.getEnv().it('test1');
 
     expect(testMock).toHaveBeenCalledTimes(1);
-    expect(testMock).toHaveBeenCalledWith("test1");
+    expect(testMock).toHaveBeenCalledWith('test1');
 
-    expect(testCase).toHaveProperty("beforeAndAfterFns");
-    expect(testCase).toHaveProperty("getFullName");
+    expect(testCase).toHaveProperty('beforeAndAfterFns');
+    expect(testCase).toHaveProperty('getFullName');
 
     expect(testCase.getFullName()).toMatchInlineSnapshot(`"test1"`);
   });
 
-  it("should add custom before and after hooks when beforeAndAfterFns is called", () => {
+  it('should add custom before and after hooks when beforeAndAfterFns is called', () => {
     const jasmine = new JasmineMock();
 
     setupPolly(PollyMock, {}, jasmine, {});
@@ -89,16 +89,16 @@ describe("setupPolly", () => {
     expect(befores).toHaveLength(1);
   });
 
-  it("should return context with polly and clearPolly method", () => {
+  it('should return context with polly and clearPolly method', () => {
     const jasmine = new JasmineMock();
 
     const context = setupPolly(PollyMock, {}, jasmine, {});
 
-    expect(context).toHaveProperty("polly", null);
-    expect(context).toHaveProperty("clearPolly");
+    expect(context).toHaveProperty('polly', null);
+    expect(context).toHaveProperty('clearPolly');
   });
 
-  it("should unmock jasmine.it when clearPolly is called", () => {
+  it('should unmock jasmine.it when clearPolly is called', () => {
     const jasmine = new JasmineMock();
 
     expect(jasmine.getEnv().it).toBe(testMock);
@@ -112,7 +112,7 @@ describe("setupPolly", () => {
     expect(jasmine.getEnv().it).toBe(testMock);
   });
 
-  it("should create instace of polly when before hook is called", () => {
+  it('should create instace of polly when before hook is called', () => {
     const done = jest.fn();
     const pollyOptions = {};
 
@@ -120,7 +120,7 @@ describe("setupPolly", () => {
 
     const context = setupPolly(PollyMock, pollyOptions, jasmine, {});
 
-    const testCase = jasmine.getEnv().it("test3");
+    const testCase = jasmine.getEnv().it('test3');
 
     const { befores } = testCase.beforeAndAfterFns();
 
@@ -129,11 +129,11 @@ describe("setupPolly", () => {
     expect(done).toHaveBeenCalledTimes(1);
 
     expect(context.polly).toBeInstanceOf(PollyMock);
-    expect(context.polly.name).toBe("test3");
+    expect(context.polly.name).toBe('test3');
     expect(context.polly.options).toBe(pollyOptions);
   });
 
-  it("should stop polly and remove it from context when after hook is called", async () => {
+  it('should stop polly and remove it from context when after hook is called', async () => {
     const done = jest.fn();
     const pollyOptions = {};
 
@@ -141,7 +141,7 @@ describe("setupPolly", () => {
 
     const context = setupPolly(PollyMock, pollyOptions, jasmine, {});
 
-    const testCase = jasmine.getEnv().it("test name");
+    const testCase = jasmine.getEnv().it('test name');
 
     const { befores, afters } = testCase.beforeAndAfterFns();
 

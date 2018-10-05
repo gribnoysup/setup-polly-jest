@@ -21,9 +21,9 @@ const context = setupPolly({
   persister: FSPersister,
   persisterOptions: {
     fs: {
-      recordingsDir: path.resolve(__dirname, '../__recordings__'),
-    },
-  },
+      recordingsDir: path.resolve(__dirname, '../__recordings__')
+    }
+  }
 });
 
 describe('polly jest integration', () => {
