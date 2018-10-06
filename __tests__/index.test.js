@@ -1,3 +1,5 @@
+/* global jasmine */
+
 const path = require('path');
 const fetch = require('node-fetch');
 
