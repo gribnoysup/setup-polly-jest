@@ -1,10 +1,12 @@
+/* global jasmine */
+
 const path = require('path');
 const fetch = require('node-fetch');
 
 const FetchAdapter = require('@pollyjs/adapter-fetch');
 const FSPersister = require('@pollyjs/persister-fs');
 
-const { setupPolly } = require('../');
+const { setupPolly, IS_POLLY_SET_UP } = require('../');
 
 const getPost = async id => {
   const response = await fetch(
@@ -16,17 +18,24 @@ const getPost = async id => {
   return Object.assign(json, { ok: response.ok, status: response.status });
 };
 
-const context = setupPolly({
-  adapters: [FetchAdapter],
-  persister: FSPersister,
-  persisterOptions: {
-    fs: {
-      recordingsDir: path.resolve(__dirname, '../__recordings__')
-    }
-  }
-});
-
 describe('polly jest integration', () => {
+  const context = setupPolly({
+    adapters: [FetchAdapter],
+    persister: FSPersister,
+    persisterOptions: {
+      fs: {
+        recordingsDir: path.resolve(__dirname, '../__recordings__')
+      }
+    }
+  });
+
+  it('should proxy jasmine.env.{it,fit} methods', () => {
+    const jasmineEnv = jasmine.getEnv();
+
+    expect(jasmineEnv.it[IS_POLLY_SET_UP]).toBe(true);
+    expect(jasmineEnv.fit[IS_POLLY_SET_UP]).toBe(true);
+  });
+
   test('should have polly running with `test`', async () => {
     expect(await getPost(1)).toHaveProperty('id', 1);
   });
@@ -59,5 +68,14 @@ describe('polly jest integration', () => {
 
     expect(response).toHaveProperty('ok', false);
     expect(response).toHaveProperty('status', 404);
+  });
+});
+
+describe('setup polly scope', () => {
+  it('should not be active here anymore', () => {
+    const jasmineEnv = jasmine.getEnv();
+
+    expect(jasmineEnv.it[IS_POLLY_SET_UP]).toBeUndefined();
+    expect(jasmineEnv.fit[IS_POLLY_SET_UP]).toBeUndefined();
   });
 });

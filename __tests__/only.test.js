@@ -16,7 +16,7 @@ const getPost = async id => {
   return Object.assign(json, { ok: response.ok, status: response.status });
 };
 
-const context = setupPolly({
+setupPolly({
   adapters: [FetchAdapter],
   persister: FSPersister,
   persisterOptions: {
