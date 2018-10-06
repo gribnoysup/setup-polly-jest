@@ -1,4 +1,4 @@
-import { setupPolly } from '../lib/setup';
+import { setupPolly, IS_POLLY_SET_UP } from '../lib/setup';
 
 class PollyMock {
   constructor(name, options) {
@@ -10,16 +10,48 @@ class PollyMock {
 
 const beforeAndAfterFnsMock = jest.fn(() => ({ befores: [], afters: [] }));
 
-const testMock = jest.fn((name, fn, timeout) => {
+const testMock = jest.fn(name => {
   return {
-    getFullName: jest.fn(() => name),
+    id: name,
+    description: name,
     beforeAndAfterFns: beforeAndAfterFnsMock
   };
 });
 
+const createSuiteMock = (
+  id,
+  description,
+  parentSuite = null,
+  children = []
+) => ({
+  id,
+  description,
+  parentSuite,
+  children
+});
+
 class JasmineMock {
   constructor() {
-    this.env = { it: testMock };
+    this.topSuite = createSuiteMock('suite0', 'suite0 description');
+
+    const anotherSuite = createSuiteMock(
+      'suite1',
+      'suite1 description',
+      this.topSuite
+    );
+
+    const oneMoreSuite = createSuiteMock(
+      'special_test_id_to_test_name_generation',
+      'description',
+      anotherSuite
+    );
+
+    anotherSuite.children.push(oneMoreSuite);
+
+    this.topSuite.children.push(anotherSuite);
+
+    this.env = { it: testMock, fit: testMock, topSuite: () => this.topSuite };
+
     this.getEnv = jest.fn(() => this.env);
   }
 }
@@ -50,44 +82,54 @@ describe('setupPolly', () => {
     );
   });
 
-  it('should override jasmine `it` method', () => {
+  test.each(['it', 'fit'])('should override jasmine method `%s`', method => {
     const jasmine = new JasmineMock();
+    const env = jasmine.getEnv();
 
-    expect(jasmine.getEnv().it).toBe(testMock);
+    expect(env[method]).toBe(testMock);
+    expect(env[method][IS_POLLY_SET_UP]).toBeUndefined();
 
     setupPolly(PollyMock, {}, jasmine, {});
 
-    expect(jasmine.getEnv().it).not.toBe(testMock);
+    expect(env[method]).not.toBe(testMock);
+    expect(env[method][IS_POLLY_SET_UP]).toBe(true);
   });
 
-  it('should returned modified test case after setupPolly is called', () => {
-    const jasmine = new JasmineMock();
+  test.each(['it', 'fit'])(
+    'should return modified test case when `%s` is called after polly is set up',
+    method => {
+      const jasmine = new JasmineMock();
+      const env = jasmine.getEnv();
+      const description = `test created with ${method}()`;
 
-    setupPolly(PollyMock, {}, jasmine, {});
+      const testCase = env[method](description);
 
-    const testCase = jasmine.getEnv().it('test1');
+      expect(testMock).toHaveBeenCalledTimes(1);
+      expect(testMock).toHaveBeenCalledWith(description);
 
-    expect(testMock).toHaveBeenCalledTimes(1);
-    expect(testMock).toHaveBeenCalledWith('test1');
+      expect(testCase).toHaveProperty('beforeAndAfterFns');
+      expect(testCase).toHaveProperty('description');
 
-    expect(testCase).toHaveProperty('beforeAndAfterFns');
-    expect(testCase).toHaveProperty('getFullName');
+      expect(testCase.description).toBe(description);
+    }
+  );
 
-    expect(testCase.getFullName()).toMatchInlineSnapshot(`"test1"`);
-  });
+  test.each(['it', 'fit'])(
+    'should add before and after hooks when beforeAndAfterFns is callen on `%s` test case',
+    method => {
+      const jasmine = new JasmineMock();
+      const env = jasmine.getEnv();
 
-  it('should add custom before and after hooks when beforeAndAfterFns is called', () => {
-    const jasmine = new JasmineMock();
+      setupPolly(PollyMock, {}, jasmine, {});
 
-    setupPolly(PollyMock, {}, jasmine, {});
+      const testCase = env[method]('test case');
 
-    const testCase = jasmine.getEnv().it();
+      const { befores, afters } = testCase.beforeAndAfterFns();
 
-    const { befores, afters } = testCase.beforeAndAfterFns();
-
-    expect(afters).toHaveLength(1);
-    expect(befores).toHaveLength(1);
-  });
+      expect(afters).toHaveLength(1);
+      expect(befores).toHaveLength(1);
+    }
+  );
 
   it('should return context with polly and clearPolly method', () => {
     const jasmine = new JasmineMock();
@@ -98,60 +140,94 @@ describe('setupPolly', () => {
     expect(context).toHaveProperty('clearPolly');
   });
 
-  it('should unmock jasmine.it when clearPolly is called', () => {
-    const jasmine = new JasmineMock();
+  test.each(['it', 'fit'])(
+    'should remove proxy from `%s` method when clearPolly is called',
+    method => {
+      const jasmine = new JasmineMock();
+      const env = jasmine.getEnv();
 
-    expect(jasmine.getEnv().it).toBe(testMock);
+      expect(env[method]).toBe(testMock);
+      expect(env[method][IS_POLLY_SET_UP]).toBeUndefined();
 
-    const { clearPolly } = setupPolly(PollyMock, {}, jasmine, {});
+      const { clearPolly } = setupPolly(PollyMock, {}, jasmine, {});
 
-    expect(jasmine.getEnv().it).not.toBe(testMock);
+      expect(env[method]).not.toBe(testMock);
+      expect(env[method][IS_POLLY_SET_UP]).toBe(true);
 
-    clearPolly();
+      clearPolly();
 
-    expect(jasmine.getEnv().it).toBe(testMock);
-  });
+      expect(env[method]).toBe(testMock);
+      expect(env[method][IS_POLLY_SET_UP]).toBeUndefined();
+    }
+  );
 
-  it('should create instace of polly when before hook is called', () => {
-    const done = jest.fn();
+  test.each(['it', 'fit'])(
+    'should create instance of polly when before hook is called for `%s` test',
+    method => {
+      const done = jest.fn();
+      const pollyOptions = {};
+
+      const jasmine = new JasmineMock();
+      const env = jasmine.getEnv();
+
+      const context = setupPolly(PollyMock, pollyOptions, jasmine, {});
+
+      const testCase = env[method]('test case');
+
+      const { befores } = testCase.beforeAndAfterFns();
+
+      befores[0].fn(done);
+
+      expect(done).toHaveBeenCalledTimes(1);
+
+      expect(context.polly).toBeInstanceOf(PollyMock);
+      expect(context.polly.name).toBe('test case');
+      expect(context.polly.options).toBe(pollyOptions);
+    }
+  );
+
+  it('should use parent suite names when generating name', () => {
     const pollyOptions = {};
 
     const jasmine = new JasmineMock();
+    const env = jasmine.getEnv();
 
     const context = setupPolly(PollyMock, pollyOptions, jasmine, {});
 
-    const testCase = jasmine.getEnv().it('test3');
+    const testCase = env.it('special_test_id_to_test_name_generation');
 
     const { befores } = testCase.beforeAndAfterFns();
 
-    befores[0].fn(done);
+    befores[0].fn();
 
-    expect(done).toHaveBeenCalledTimes(1);
-
-    expect(context.polly).toBeInstanceOf(PollyMock);
-    expect(context.polly.name).toBe('test3');
-    expect(context.polly.options).toBe(pollyOptions);
+    expect(context.polly.name).toMatchInlineSnapshot(
+      `"suite0 description/suite1 description/special_test_id_to_test_name_generation"`
+    );
   });
 
-  it('should stop polly and remove it from context when after hook is called', async () => {
-    const done = jest.fn();
-    const pollyOptions = {};
+  test.each(['it', 'fit'])(
+    'should stop polly and remove it from context when after hook is called for `%s` test',
+    async method => {
+      const done = jest.fn();
+      const pollyOptions = {};
 
-    const jasmine = new JasmineMock();
+      const jasmine = new JasmineMock();
+      const env = jasmine.getEnv();
 
-    const context = setupPolly(PollyMock, pollyOptions, jasmine, {});
+      const context = setupPolly(PollyMock, pollyOptions, jasmine, {});
 
-    const testCase = jasmine.getEnv().it('test name');
+      const testCase = env[method]('test name');
 
-    const { befores, afters } = testCase.beforeAndAfterFns();
+      const { befores, afters } = testCase.beforeAndAfterFns();
 
-    befores[0].fn(done);
+      befores[0].fn(done);
 
-    const tempPolly = context.polly;
+      const tempPolly = context.polly;
 
-    await afters[0].fn(done);
+      await afters[0].fn(done);
 
-    expect(tempPolly.stop).toHaveBeenCalledTimes(1);
-    expect(context.polly).toBe(null);
-  });
+      expect(tempPolly.stop).toHaveBeenCalledTimes(1);
+      expect(context.polly).toBe(null);
+    }
+  );
 });
