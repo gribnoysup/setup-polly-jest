@@ -10,7 +10,37 @@ const getJasmineEnv = jasmine => {
   );
 };
 
+const getRecordingName = (spec, suite) => {
+  const descriptions = [spec.description];
+
+  while (suite) {
+    suite.description && descriptions.push(suite.description);
+    suite = suite.parentSuite;
+  }
+
+  return descriptions.reverse().join('/');
+};
+
 export const IS_POLLY_SET_UP = Symbol('IS_POLLY_SET_UP');
+
+/**
+ * Recursively go through suite and its children
+ * and return the first that matches the predicate
+ * condition
+ *
+ * @param {Object} suite Starting point
+ * @param {Function} predicate Find function
+ *
+ * @returns {?Object} Matching suite or null
+ */
+const findSuiteRec = (suite, predicate) => {
+  if (predicate(suite)) return suite;
+  for (const child of suite.children || []) {
+    const result = findSuiteRec(child, predicate);
+    if (result !== null) return result;
+  }
+  return null;
+};
 
 /**
  * Sets up Polly to work with jest/jasmine test environments.
@@ -80,16 +110,22 @@ export const setupPolly = (
   // to proxy original test functions from
   // jasmine env
   const createTestFn = testFn => (...args) => {
-    const testCase = testFn.apply(jasmineEnv, args);
-    const hooks = testCase.beforeAndAfterFns;
+    const spec = testFn.apply(jasmineEnv, args);
+    const hooks = spec.beforeAndAfterFns;
+
+    const specSuite = findSuiteRec(jasmineEnv.topSuite(), suite =>
+      (suite.children || []).some(child => child.id === spec.id)
+    );
+
+    const recordingName = getRecordingName(spec, specSuite);
 
     // Overwrite `beforeAndAfterFns` to add additional before/after hooks
     // to all tests
-    testCase.beforeAndAfterFns = (...args) => {
-      const { befores, afters } = hooks.apply(testCase, args);
+    spec.beforeAndAfterFns = (...args) => {
+      const { befores, afters } = hooks.apply(spec, args);
 
       const before = done => {
-        polly = new Polly(testCase.getFullName(), options);
+        polly = new Polly(recordingName, options);
         done && done();
       };
 
@@ -112,7 +148,7 @@ export const setupPolly = (
       };
     };
 
-    return testCase;
+    return spec;
   };
 
   jasmineEnv.it = createTestFn(test);
