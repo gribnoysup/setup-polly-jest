@@ -10,7 +10,7 @@ const getJasmineEnv = jasmine => {
   );
 };
 
-const POLLY_SET_UP = Symbol();
+export const IS_POLLY_SET_UP = Symbol('IS_POLLY_SET_UP');
 
 /**
  * Sets up Polly to work with jest/jasmine test environments.
@@ -67,8 +67,8 @@ export const setupPolly = (
   const testOnly = jasmineEnv.fit;
 
   if (
-    jasmineEnv.it[POLLY_SET_UP] === true ||
-    jasmineEnv.fit[POLLY_SET_UP] === true
+    jasmineEnv.it[IS_POLLY_SET_UP] === true ||
+    jasmineEnv.fit[IS_POLLY_SET_UP] === true
   ) {
     throw new Error(
       'Seems like polly is set up already. ' +
@@ -116,10 +116,10 @@ export const setupPolly = (
   };
 
   jasmineEnv.it = createTestFn(test);
-  jasmineEnv.it[POLLY_SET_UP] = true;
+  jasmineEnv.it[IS_POLLY_SET_UP] = true;
 
   jasmineEnv.fit = createTestFn(testOnly);
-  jasmineEnv.fit[POLLY_SET_UP] = true;
+  jasmineEnv.fit[IS_POLLY_SET_UP] = true;
 
   const clearPolly = async done => {
     if (polly && typeof polly.stop === 'function') {
