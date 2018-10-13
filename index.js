@@ -1,13 +1,16 @@
 const { Polly } = require('@pollyjs/core');
 
-const { setupPolly: setup, IS_POLLY_SET_UP } = require('./lib/setup');
+const {
+  setupJasmine,
+  IS_POLLY_ACTIVE,
+  IS_POLLY_ATTACHED
+} = require('./lib/setupJasmine');
 
 module.exports = Object.assign(
   {
-    setupPolly(options, jasmine, context) {
-      return setup(Polly, options, jasmine, context);
+    setupPolly(options) {
+      return setupJasmine(Polly, options);
     }
   },
-  // Export Symbol only for testing purposes
-  process.env.NODE_ENV === 'test' && { IS_POLLY_SET_UP }
+  process.env.NODE_ENV === 'test' && { IS_POLLY_ACTIVE, IS_POLLY_ATTACHED }
 );
