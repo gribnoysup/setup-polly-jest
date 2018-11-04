@@ -1,13 +1,32 @@
-export const IS_POLLY_ACTIVE = Symbol('IS_POLLY_ACTIVE');
+/**
+ * Flag, showing that Polly is active
+ */
+const IS_POLLY_ACTIVE = Symbol('IS_POLLY_ACTIVE');
 
-export const IS_POLLY_ATTACHED = Symbol('IS_POLLY_ATTACHED');
+/**
+ * Flag, showing that proxy test methods are attached
+ */
+const IS_POLLY_ATTACHED = Symbol('IS_POLLY_ATTACHED');
 
+/**
+ * Shared context to keep polly instance and
+ * options for a specific run
+ */
 const pollyContext = {
   polly: null,
-  pollyOptions: {}
+  options: {}
 };
 
-const getRecordingName = (spec, suite) => {
+/**
+ * Get full spec description, starting from the top
+ * suite
+ *
+ * @param {Object} spec Current spec
+ * @param {Object} suite Current spec parent suite
+ *
+ * @returns {string} Full spec description (e.g. "suite/should do something")
+ */
+function getRecordingName(spec, suite) {
   const descriptions = [spec.description];
 
   while (suite) {
@@ -16,7 +35,7 @@ const getRecordingName = (spec, suite) => {
   }
 
   return descriptions.reverse().join('/');
-};
+}
 
 /**
  * Recursively go through suite and its children
@@ -28,7 +47,7 @@ const getRecordingName = (spec, suite) => {
  *
  * @returns {?Object} Matching suite or null
  */
-const findSuiteRec = (suite, findFn) => {
+function findSuiteRec(suite, findFn) {
   if (findFn(suite)) return suite;
 
   for (const child of suite.children || []) {
@@ -40,63 +59,85 @@ const findSuiteRec = (suite, findFn) => {
   }
 
   return null;
-};
+}
 
-const createTestFnProxy = (testFn, Polly, jasmineEnv) => (...args) => {
-  const spec = testFn.apply(jasmineEnv, args);
-  const specHooks = spec.beforeAndAfterFns;
+/**
+ * Create proxy for jasmine test function that starts and
+ * stops Polly on before/after hooks
+ *
+ * @param {Object} Polly Polly constructor
+ * @param {Function} fn Original test runner test function
+ * @param {Object} jasmineEnv Jasmine environment
+ *
+ * @returns {Function} Proxy function
+ */
+function createTestFnProxy(Polly, fn, jasmineEnv) {
+  return function testFn() {
+    const spec = fn.apply(jasmineEnv, arguments);
+    const specHooks = spec.beforeAndAfterFns;
 
-  spec.beforeAndAfterFns = (...args) => {
-    const { befores, afters } = specHooks.apply(spec, args);
+    spec.beforeAndAfterFns = function beforeAndAfterFns() {
+      const { befores, afters } = specHooks.apply(spec, arguments);
 
-    const before = done => {
-      if (jasmineEnv[IS_POLLY_ACTIVE]) {
-        const topSuite = jasmineEnv.topSuite();
-        const specParentSuite = findSuiteRec(topSuite, suite =>
-          (suite.children || []).some(child => child.id === spec.id)
-        );
+      const before = async function before(done) {
+        if (jasmineEnv[IS_POLLY_ACTIVE]) {
+          const topSuite = jasmineEnv.topSuite();
+          const specParentSuite = findSuiteRec(topSuite, suite =>
+            (suite.children || []).some(child => child.id === spec.id)
+          );
 
-        const recordingName = getRecordingName(spec, specParentSuite).replace(
-          `${topSuite.description}/`,
-          ''
-        );
+          let recordingName = getRecordingName(spec, specParentSuite);
 
-        pollyContext.polly = new Polly(
-          recordingName,
-          pollyContext.pollyOptions
-        );
-      }
+          // In jest top suite description is empty, in jasmine it is
+          // randomly generated string. We don't want it to be used
+          // as recording name if it exists
+          if (topSuite.description) {
+            recordingName = recordingName.replace(
+              `${topSuite.description}/`,
+              ''
+            );
+          }
 
-      done && done();
+          pollyContext.polly = new Polly(recordingName, pollyContext.options);
+        }
+
+        done && done();
+      };
+
+      const after = async function after(done) {
+        if (jasmineEnv[IS_POLLY_ACTIVE]) {
+          await pollyContext.polly.stop();
+          pollyContext.polly = null;
+        }
+
+        done && done();
+      };
+
+      return {
+        befores: [{ fn: before }, ...befores],
+        afters: [...afters, { fn: after }]
+      };
     };
 
-    const after = async done => {
-      if (pollyContext.polly) {
-        await pollyContext.polly.stop();
-        pollyContext.polly = null;
-      }
-
-      done && done();
-    };
-
-    return {
-      befores: [{ fn: before }, ...befores],
-      afters: [...afters, { fn: after }]
-    };
+    return spec;
   };
+}
 
-  return spec;
-};
-
-export const setupJasmine = (
-  Polly,
-  pollyOptions = {},
-  jasmineContext = global.jasmine,
-  globalContext = global
-) => {
+/**
+ * Attach test fn proxies to jasmine environment if needed and
+ * add beforeAll/afterAll hooks that will activate/deactivate
+ * Polly when running test suite
+ *
+ * @param {Object} Polly Polly constructor
+ * @param {Object} defaults Polly default options
+ * @param {Object} ctx Global context
+ *
+ * @returns {Object} Context with `polly` property
+ */
+export default function setupJasmine(Polly, defaults = {}, ctx = global) {
   if (
-    !jasmineContext ||
-    (jasmineContext && typeof jasmineContext.getEnv !== 'function')
+    !ctx.jasmine ||
+    (ctx.jasmine && typeof ctx.jasmine.getEnv !== 'function')
   ) {
     throw new TypeError(
       'Couldn\'t find jasmine environment. Make sure that you are using "setupJasmine" in ' +
@@ -104,39 +145,33 @@ export const setupJasmine = (
     );
   }
 
-  const jasmineEnv = jasmineContext.getEnv();
-
-  pollyContext.pollyOptions = pollyOptions;
-
-  const clearPolly = async done => {
-    if (pollyContext.polly) {
-      await pollyContext.polly.stop();
-      pollyContext.polly = null;
-    }
-
-    jasmineEnv[IS_POLLY_ACTIVE] = false;
-
-    done && done();
-  };
+  const jasmineEnv = ctx.jasmine.getEnv();
 
   if (!jasmineEnv[IS_POLLY_ATTACHED]) {
-    jasmineEnv.it = createTestFnProxy(jasmineEnv.it, Polly, jasmineEnv);
-    jasmineEnv.fit = createTestFnProxy(jasmineEnv.fit, Polly, jasmineEnv);
+    jasmineEnv.it = createTestFnProxy(Polly, jasmineEnv.it, jasmineEnv);
+    jasmineEnv.fit = createTestFnProxy(Polly, jasmineEnv.fit, jasmineEnv);
 
     jasmineEnv[IS_POLLY_ATTACHED] = true;
     jasmineEnv[IS_POLLY_ACTIVE] = false;
   }
 
-  globalContext.beforeAll(() => {
+  ctx.beforeAll(() => {
+    pollyContext.options = defaults;
     jasmineEnv[IS_POLLY_ACTIVE] = true;
   });
 
-  globalContext.afterAll(clearPolly);
+  ctx.afterAll(() => {
+    pollyContext.options = null;
+    jasmineEnv[IS_POLLY_ACTIVE] = false;
+  });
 
   return {
     get polly() {
       return pollyContext.polly;
-    },
-    clearPolly
+    }
   };
-};
+}
+
+setupJasmine.IS_POLLY_ACTIVE = IS_POLLY_ACTIVE;
+
+setupJasmine.IS_POLLY_ATTACHED = IS_POLLY_ATTACHED;

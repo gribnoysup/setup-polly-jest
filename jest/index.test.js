@@ -71,30 +71,6 @@ describe('setupPolly', () => {
   });
 });
 
-describe('clearPolly', () => {
-  const { clearPolly } = setupPolly({
-    adapters: [FetchAdapter],
-    persister: FSPersister,
-    persisterOptions: {
-      fs: {
-        recordingsDir: path.resolve(__dirname, '__recordings__')
-      }
-    }
-  });
-
-  it('should disable polly right away and write recordings', async () => {
-    const jasmineEnv = jasmine.getEnv();
-
-    expect(jasmineEnv[IS_POLLY_ACTIVE]).toBe(true);
-
-    expect(await getPost(3)).toHaveProperty('id', 3);
-
-    await clearPolly();
-
-    expect(jasmineEnv[IS_POLLY_ACTIVE]).toBe(false);
-  });
-});
-
 describe('another describe', () => {
   it('should not have polly active', () => {
     const jasmineEnv = jasmine.getEnv();

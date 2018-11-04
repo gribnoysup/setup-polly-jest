@@ -1,10 +1,11 @@
 {
-  "name": "@gribnoysup/setup-polly-jest",
+  "name": "setup-polly-jest",
   "version": "0.4.0",
   "description": "Setup helper for PollyJS when using in jest/jasmine test environment",
   "main": "index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
+    "test": "npm run build && npm run test:jest && npm run test:jasmine",
     "test:jest": "jest",
     "test:jasmine": "NODE_ENV=test jasmine",
     "prepare": "npm run build && npm run test:jest && npm run test:jasmine",
