@@ -47,6 +47,10 @@
   "peerDependencies": {
     "@pollyjs/core": "*"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gribnoysup/setup-polly-jest"
+  },
   "jest": {
     "testMatch": [
       "<rootDir>/jest/**/*.test.js"
