@@ -70,7 +70,7 @@ describe('test with polly', () => {
 ```
 
 > ℹ️&nbsp;&nbsp;For real-world example, check out
-> [tests](__tests__/index.test.js) in this repo
+> [tests](jest/index.test.js) in this repo
 
 ## LICENCE
 
