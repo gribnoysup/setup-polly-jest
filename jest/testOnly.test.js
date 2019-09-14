@@ -1,9 +1,6 @@
 const path = require('path');
 const fetch = require('node-fetch');
 
-const FetchAdapter = require('@pollyjs/adapter-fetch');
-const FSPersister = require('@pollyjs/persister-fs');
-
 const { setupPolly } = require('../');
 
 const getPost = async id => {
@@ -17,8 +14,8 @@ const getPost = async id => {
 };
 
 setupPolly({
-  adapters: [FetchAdapter],
-  persister: FSPersister,
+  adapters: [require('@pollyjs/adapter-node-http')],
+  persister: require('@pollyjs/persister-fs'),
   persisterOptions: {
     fs: {
       recordingsDir: path.resolve(__dirname, '__recordings__')

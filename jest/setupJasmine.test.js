@@ -1,3 +1,4 @@
+import { Polly } from '@pollyjs/core';
 import setupJasmine from '../lib/setupJasmine';
 
 import {
@@ -22,6 +23,32 @@ describe('setupJasmine', () => {
     ).toThrowErrorMatchingInlineSnapshot(
       `"Couldn't find jasmine environment. Make sure that you are using \\"setupJasmine\\" in jasmine/jest environment or that you provided proper jasmine environment when calling \\"setupJasmine\\""`
     );
+  });
+
+  it('should fail the test when something goes wrong while creating polly instance', () => {
+    const stub = new GlobalMock();
+    const env = stub.jasmine.getEnv();
+
+    setupJasmine(
+      Polly,
+      { persister: 'this one will fail polly with error' },
+      stub
+    );
+
+    stub.callBeforeAll();
+
+    const testCase = env.it('test case');
+
+    const { fn: before } = testCase.beforeAndAfterFns().befores[0];
+
+    const done = jest.fn();
+
+    done.fail = jest.fn();
+
+    before(done);
+
+    expect(done).toHaveBeenCalledTimes(0);
+    expect(done.fail).toHaveBeenCalledTimes(1);
   });
 
   test.each(['it', 'fit'])('should override jasmine method `%s`', method => {

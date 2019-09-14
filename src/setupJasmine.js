@@ -50,7 +50,8 @@ function getRecordingName(spec, suite) {
 function findSuiteRec(suite, findFn) {
   if (findFn(suite)) return suite;
 
-  for (const child of suite.children || []) {
+  for (let i = 0, len = (suite.children || []).length; i < len; i++) {
+    const child = suite.children[i];
     const result = findSuiteRec(child, findFn);
 
     if (result !== null) {
@@ -80,34 +81,47 @@ function createTestFnProxy(Polly, fn, jasmineEnv) {
       const { befores, afters } = specHooks.apply(spec, arguments);
 
       const before = async function before(done) {
-        if (jasmineEnv[IS_POLLY_ACTIVE]) {
-          const topSuite = jasmineEnv.topSuite();
-          const specParentSuite = findSuiteRec(topSuite, suite =>
-            (suite.children || []).some(child => child.id === spec.id)
-          );
-
-          let recordingName = getRecordingName(spec, specParentSuite);
-
-          // In jest top suite description is empty, in jasmine it is
-          // randomly generated string. We don't want it to be used
-          // as recording name if it exists
-          if (topSuite.description) {
-            recordingName = recordingName.replace(
-              `${topSuite.description}/`,
-              ''
+        try {
+          if (jasmineEnv[IS_POLLY_ACTIVE]) {
+            const topSuite = jasmineEnv.topSuite();
+            const specParentSuite = findSuiteRec(topSuite, suite =>
+              (suite.children || []).some(child => child.id === spec.id)
             );
-          }
 
-          pollyContext.polly = new Polly(recordingName, pollyContext.options);
+            let recordingName = getRecordingName(spec, specParentSuite);
+
+            // In jest top suite description is empty, in jasmine it is
+            // randomly generated string. We don't want it to be used
+            // as recording name if it exists
+            if (topSuite.description) {
+              recordingName = recordingName.replace(
+                `${topSuite.description}/`,
+                ''
+              );
+            }
+
+            pollyContext.polly = new Polly(recordingName, pollyContext.options);
+          }
+        } catch (error) {
+          // If something went wrong while trying to create new polly
+          // instance (e.g., wrong polly config was passed) let's fail
+          // the test with an error
+          done && done.fail(error);
+          return;
         }
 
         done && done();
       };
 
       const after = async function after(done) {
-        if (jasmineEnv[IS_POLLY_ACTIVE]) {
-          await pollyContext.polly.stop();
-          pollyContext.polly = null;
+        try {
+          if (jasmineEnv[IS_POLLY_ACTIVE] && pollyContext.polly) {
+            await pollyContext.polly.stop();
+            pollyContext.polly = null;
+          }
+        } catch (error) {
+          done && done.fail(error);
+          return;
         }
 
         done && done();
