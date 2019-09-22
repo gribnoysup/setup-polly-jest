@@ -11,6 +11,12 @@ import { PollyMock } from './__mocks__/polly';
 
 const { IS_POLLY_ACTIVE, IS_POLLY_ATTACHED } = setupJasmine;
 
+const mockDone = () => {
+  const done = jest.fn();
+  done.fail = jest.fn();
+  return done;
+};
+
 describe('setupJasmine', () => {
   afterEach(() => {
     testMock.mockClear();
@@ -25,13 +31,15 @@ describe('setupJasmine', () => {
     );
   });
 
-  it('should fail the test when something goes wrong while creating polly instance', () => {
+  it('should fail the test in before hook when something went wrong', () => {
     const stub = new GlobalMock();
     const env = stub.jasmine.getEnv();
 
     setupJasmine(
-      Polly,
-      { persister: 'this one will fail polly with error' },
+      function Polly() {
+        throw new Error('whoops');
+      },
+      {},
       stub
     );
 
@@ -41,13 +49,37 @@ describe('setupJasmine', () => {
 
     const { fn: before } = testCase.beforeAndAfterFns().befores[0];
 
-    const done = jest.fn();
-
-    done.fail = jest.fn();
+    const done = mockDone();
 
     before(done);
 
     expect(done).toHaveBeenCalledTimes(0);
+    expect(done.fail).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail the tests in after hooks when Polly throws', () => {
+    const stub = new GlobalMock();
+    const env = stub.jasmine.getEnv();
+
+    setupJasmine(Polly, { persister: 'will-throw' }, stub);
+
+    stub.callBeforeAll();
+
+    const testCase = env.it('test case');
+
+    const { fn: before } = testCase.beforeAndAfterFns().befores[0];
+    const { fn: after } = testCase.beforeAndAfterFns().afters[0];
+
+    const done = mockDone();
+
+    before(done);
+
+    expect(done).toHaveBeenCalledTimes(1);
+    expect(done.fail).toHaveBeenCalledTimes(0);
+
+    after(done);
+
+    expect(done).toHaveBeenCalledTimes(1);
     expect(done.fail).toHaveBeenCalledTimes(1);
   });
 
