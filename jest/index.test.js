@@ -1,10 +1,6 @@
 /* global jasmine */
-
 const path = require('path');
 const fetch = require('node-fetch');
-
-const FetchAdapter = require('@pollyjs/adapter-fetch');
-const FSPersister = require('@pollyjs/persister-fs');
 
 const { setupPolly, IS_POLLY_ACTIVE, IS_POLLY_ATTACHED } = require('../');
 
@@ -20,8 +16,8 @@ const getPost = async id => {
 
 describe('setupPolly', () => {
   const context = setupPolly({
-    adapters: [FetchAdapter],
-    persister: FSPersister,
+    adapters: [require('@pollyjs/adapter-node-http')],
+    persister: require('@pollyjs/persister-fs'),
     persisterOptions: {
       fs: {
         recordingsDir: path.resolve(__dirname, '__recordings__')

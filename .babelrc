@@ -4,10 +4,12 @@
       "@babel/preset-env",
       {
         "useBuiltIns": "entry",
+        "corejs": 3,
         "targets": {
           "node": "6"
         }
       }
     ]
-  ]
+  ],
+  "plugins": ["babel-plugin-transform-async-to-promises"]
 }
