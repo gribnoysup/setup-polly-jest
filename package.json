@@ -53,6 +53,7 @@
   "jest": {
     "testMatch": [
       "<rootDir>/jest/**/*.test.js"
-    ]
+    ],
+    "testRunner": "jasmine2"
   }
 }
