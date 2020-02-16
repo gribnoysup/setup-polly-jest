@@ -161,6 +161,41 @@ function createTestFnProxy(Polly, fn, jasmineEnv) {
 }
 
 /**
+ * A message can have a little formatting, as a treat
+ *
+ * Replaces one new line with a space, keeps two newlines intact treating
+ * text kinda like a markdown paragraphs.
+ *
+ * @example
+ *
+ * const msg = formatMessage(`
+ *   I can type a paragraph of text
+ *   on multiple lines and this method
+ *   will format it into one line.
+ * `)
+ *
+ * msg === "I can type a paragraph of text on multiple lines and this method will format it into one line."
+ *
+ * @param {string} message
+ */
+function formatMessage(message) {
+  return (
+    message
+      // Trim every line first so we know exactly where double+ newlines are
+      .split(/\n/)
+      .map(line => line.trim())
+      .join('\n')
+      // Split by double newlines ...
+      .split(/\n{2,}/)
+      // ... and join paragraphs into a single line of text
+      .map(paragraph => paragraph.replace(/\n/g, ' '))
+      // Join everything back with double newline
+      .join('\n\n')
+      .trim()
+  );
+}
+
+/**
  * Attach test fn proxies to jasmine environment if needed and
  * add beforeAll/afterAll hooks that will activate/deactivate
  * Polly when running test suite
@@ -171,15 +206,22 @@ function createTestFnProxy(Polly, fn, jasmineEnv) {
  *
  * @returns {Object} Context with `polly` property
  */
-export default function setupJasmine(Polly, defaults = {}, ctx = global) {
+export function setupJasmine(Polly, defaults = {}, ctx = global) {
   if (
     !ctx.jasmine ||
     (ctx.jasmine && typeof ctx.jasmine.getEnv !== 'function')
   ) {
-    throw new TypeError(
-      'Couldn\'t find jasmine environment. Make sure that you are using "setupJasmine" in ' +
-        'jasmine/jest environment or that you provided proper jasmine environment when calling "setupJasmine"'
-    );
+    const message = `
+      Couldn't find jasmine environment. Make sure that you are calling
+      \`setupPolly\` in jasmine or jest-jasmine2 runtime or that you passed
+      context with jasmine runtime if you are calling \`setupJasmine\` method
+      directly.
+
+      If you are using jest, check that your \`testRunner\` config option is set
+      to "jasmine2": https://jestjs.io/docs/en/configuration#testrunner-string
+    `;
+
+    throw new Error(formatMessage(message));
   }
 
   const jasmineEnv = ctx.jasmine.getEnv();

@@ -1,5 +1,5 @@
 import { Polly } from '@pollyjs/core';
-import setupJasmine from '../lib/setupJasmine';
+import { setupJasmine } from '../lib/setupJasmine';
 
 import {
   GlobalMock,
@@ -24,11 +24,7 @@ describe('setupJasmine', () => {
   });
 
   it('should throw if jasmine env does not exist', () => {
-    expect(() =>
-      setupJasmine(PollyMock, {}, {})
-    ).toThrowErrorMatchingInlineSnapshot(
-      `"Couldn't find jasmine environment. Make sure that you are using \\"setupJasmine\\" in jasmine/jest environment or that you provided proper jasmine environment when calling \\"setupJasmine\\""`
-    );
+    expect(() => setupJasmine(PollyMock, {}, {})).toThrowError();
   });
 
   it('should fail the test in before hook when something went wrong', () => {
