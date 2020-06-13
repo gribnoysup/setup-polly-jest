@@ -141,7 +141,7 @@ describe('setupJasmine', () => {
 
     const context = setupJasmine(PollyMock, {}, stub);
 
-    expect(context).toHaveProperty('polly', null);
+    expect(() => context.polly).toThrowError();
   });
 
   test.each(['it', 'fit'])(
@@ -212,7 +212,7 @@ describe('setupJasmine', () => {
       await afters[0].fn(done);
 
       expect(tempPolly.stop).toHaveBeenCalledTimes(1);
-      expect(context.polly).toBe(null);
+      expect(() => context.polly).toThrowError();
     }
   );
 });
