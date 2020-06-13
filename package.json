@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "babel src --out-dir lib",
-    "test": "npm run build && npm run test:jest && npm run test:jasmine",
-    "test:jest": "jest",
+    "test": "npm run build && npm run test:jest-jasmine && npm run test:jest-circus && npm run test:jasmine",
+    "test:jest-jasmine": "jest --testRunner=jasmine2",
+    "test:jest-circus": "jest --testRunner=jest-circus/runner",
     "test:jasmine": "NODE_ENV=test jasmine",
-    "prepare": "npm run build && npm run test:jest && npm run test:jasmine",
+    "prepare": "npm run test",
     "prepublishOnly": "npm run prepare"
   },
   "files": [
@@ -53,7 +54,6 @@
   "jest": {
     "testMatch": [
       "<rootDir>/jest/**/*.test.js"
-    ],
-    "testRunner": "jasmine2"
+    ]
   }
 }

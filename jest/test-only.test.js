@@ -1,7 +1,7 @@
 const path = require('path');
 const fetch = require('node-fetch');
 
-const { setupPolly } = require('../');
+const { setupPolly } = require('..');
 
 const getPost = async id => {
   const response = await fetch(

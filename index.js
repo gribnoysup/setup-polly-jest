@@ -1,6 +1,6 @@
 const { Polly } = require('@pollyjs/core');
 
-const { setupJasmine } = require('./lib/jasmine/setupJasmine');
+const { setupJasmine } = require('./lib/setup-jasmine');
 
 module.exports = Object.assign(
   {
