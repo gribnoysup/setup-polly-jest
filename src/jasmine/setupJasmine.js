@@ -246,6 +246,16 @@ export function setupJasmine(Polly, defaults = {}, ctx = global) {
 
   return {
     get polly() {
+      if (pollyContext.polly == null) {
+        const message = `
+          You are trying to access an instance of Polly that is not available.
+          
+          See: https://netflix.github.io/pollyjs/#/test-frameworks/jest-jasmine?id=test-hook-ordering
+        `;
+
+        throw new Error(formatMessage(message));
+      }
+
       return pollyContext.polly;
     }
   };

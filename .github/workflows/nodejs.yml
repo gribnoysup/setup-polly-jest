@@ -18,7 +18,10 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [8.x, 10.x, 12.x]
+        # jest >= 26 does not support node8 anymore so it is removed from the 
+        # test matrix
+        # node-version: [8.x, 10.x, 12.x]
+        node-version: [10.x, 12.x]
 
     steps:
     - uses: actions/checkout@v1

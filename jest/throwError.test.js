@@ -15,9 +15,7 @@ describe.skip('setupPolly with wrong config', () => {
 });
 
 describe.skip('trying to access polly outside of tests', () => {
-  const context = setupPolly({
-    persister: 'this-will-throw'
-  });
+  const context = setupPolly();
 
   context.polly.configure({
     recordIfMissing: true
