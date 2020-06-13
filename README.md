@@ -65,12 +65,38 @@ For real-world examples, check out ["Jest + Node Fetch"][jest-node-fetch] or
 ["Jest + Puppeteer"][jest-puppeteer] examples in PollyJS docs or
 [tests](jest/index.test.js) in this repo
 
+## Test Hook Ordering
+
+Accessing `context.polly` during a test run before the instance of Polly has
+been created or cleaned up produces the following error:
+
+!> You are trying to access an instance of Polly that is not available.
+
+If you need to do some work before the test run, you can access the instance of
+Polly in `beforeEach` hook. If you need to do some work before the instance of
+Polly gets cleaned up and removed, you can do so in `afterEach` hook.
+
+```js
+describe('test', () => {
+  const context = setupPolly();
+
+  beforeEach(() => {
+    const { server } = context.polly;
+    server.get('/ping').intercept((req, res) => res.sendStatus(200));
+  });
+
+  it('does a thing', async () => {
+    expect(await fetch('/ping').status).toBe(200);
+  });
+});
+```
+
 ## Caveats
 
 Although this library is thoroughly covered with unit and intergration tests,
 its implementation depends upon overwriting Jasmine environment. That means that
-some *major* changes in how Jest or Jasmine run tests can lead to this library not
-working properly anymore.
+some _major_ changes in how Jest or Jasmine run tests can lead to this library
+not working properly anymore.
 
 ## Contributing
 

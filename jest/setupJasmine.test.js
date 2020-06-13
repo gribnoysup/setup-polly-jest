@@ -1,5 +1,5 @@
 import { Polly } from '@pollyjs/core';
-import { setupJasmine } from '../lib/setupJasmine';
+import { setupJasmine } from '../lib/jasmine/setupJasmine';
 
 import {
   GlobalMock,

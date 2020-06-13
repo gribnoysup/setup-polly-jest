@@ -65,6 +65,27 @@ describe('setupPolly', () => {
     expect(response).toHaveProperty('ok', false);
     expect(response).toHaveProperty('status', 404);
   });
+
+  describe('can access Polly in before and after each', () => {
+    beforeEach(() => {
+      context.polly.server
+        .any('https://jsonplaceholder.typicode.com/posts/:id')
+        .intercept((req, res) => {
+          return res.json({
+            id: Number(req.params.id),
+            title: 'Hello, world!'
+          });
+        });
+    });
+
+    it('gets intercepted mocked response', async () => {
+      const response = await getPost(999);
+
+      expect(response).toHaveProperty('status', 200);
+      expect(response).toHaveProperty('id', 999);
+      expect(response).toHaveProperty('title', 'Hello, world!');
+    });
+  });
 });
 
 describe('another describe', () => {
