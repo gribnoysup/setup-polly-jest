@@ -1,18 +1,18 @@
-/* global jasmine */
+/** @jest-environment ../../../jest-environment-node */
+
 const path = require('path');
 const fetch = require('node-fetch');
-
-const { setupPolly, IS_POLLY_ACTIVE, IS_POLLY_ATTACHED } = require('../');
+const { setupPolly, JestPollyGlobals } = require('../../..');
 
 const getPost = async id => {
   const response = await fetch(
     `https://jsonplaceholder.typicode.com/posts/${id}`
   );
-
   const json = await response.json();
-
   return Object.assign(json, { ok: response.ok, status: response.status });
 };
+
+const globals = new JestPollyGlobals();
 
 describe('setupPolly', () => {
   const context = setupPolly({
@@ -26,10 +26,7 @@ describe('setupPolly', () => {
   });
 
   it('should have polly active', () => {
-    const jasmineEnv = jasmine.getEnv();
-
-    expect(jasmineEnv[IS_POLLY_ATTACHED]).toBe(true);
-    expect(jasmineEnv[IS_POLLY_ACTIVE]).toBe(true);
+    expect(globals.isPollyActive).toBe(true);
   });
 
   test('should have polly running with `test`', async () => {
@@ -90,8 +87,6 @@ describe('setupPolly', () => {
 
 describe('another describe', () => {
   it('should not have polly active', () => {
-    const jasmineEnv = jasmine.getEnv();
-
-    expect(jasmineEnv[IS_POLLY_ACTIVE]).toBeFalsy();
+    expect(globals.isPollyActive).toBeFalsy();
   });
 });
