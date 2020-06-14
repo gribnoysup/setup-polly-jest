@@ -27,7 +27,7 @@ function getRecordingName(test, rootDescribeBlock) {
   let parent = test.parent;
 
   while (parent) {
-    // root describe block name is constant, no point in including it in the
+    // Root describe block name is constant, no point in including it in the
     // recording name
     if (parent.name && parent !== rootDescribeBlock) {
       name.push(parent.name);

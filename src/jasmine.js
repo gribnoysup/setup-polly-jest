@@ -24,6 +24,9 @@ function getRecordingName(spec, suite, topSuite) {
   const descriptions = [spec.description];
 
   while (suite) {
+    // In jest top suite description is empty, in jasmine it is a randomly
+    // generated string. We don't want it to be used as recording name if it
+    // exists
     if (suite.description && suite !== topSuite) {
       descriptions.push(suite.description);
     }
