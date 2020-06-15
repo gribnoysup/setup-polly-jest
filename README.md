@@ -60,13 +60,13 @@ To learn more about how to use PollyJS or what can you do with polly instance,
 please refer to [PollyJS docs][polly-docs].
 
 For real-world examples, check out ["Jest + Node Fetch"][jest-node-fetch] or
-["Jest + Puppeteer"][jest-puppeteer] examples in PollyJS docs or
-[tests](jest/index.test.js) in this repo.
+["Jest + Puppeteer"][jest-puppeteer] examples in PollyJS docs or [tests][] in
+this repo.
 
 ## Supported Test Runners
 
-This library supports `jasmine`, `jest-jasmine2` (default in jest <= 26), and
-`jest-circus` (default in jest >= 27) [test runners][]. If you are using
+This library supports `jasmine`, `jest-jasmine2` (default in `jest` <= 26), and
+`jest-circus` (default in `jest` >= 27) [test runners][]. If you are using
 `setup-polly-jest` with `jest-circus` runner you need to specify [custom test
 environment][], either in the test file where you are planning to use
 `setupPolly`:
@@ -92,7 +92,7 @@ safely used as a replacement for original `jest-environment-*` environments.
 ## Test Hook Ordering
 
 Accessing `context.polly` during a test run before the instance of Polly has
-been created or cleaned up produces the following error:
+been created or after it was cleaned up produces the following error:
 
 !> You are trying to access an instance of Polly that is not yet available.
 
@@ -144,6 +144,8 @@ issue][issue] or submit a [pull-request][pr].
 [polly-docs]: https://netflix.github.io/pollyjs/#/README
 [jest-node-fetch]:
   https://netflix.github.io/pollyjs/#/examples?id=jest-node-fetch
+[tests]:
+  https://github.com/gribnoysup/setup-polly-jest/tree/master/test/integration
 [jest-puppeteer]: https://netflix.github.io/pollyjs/#/examples?id=jest-puppeteer
 [issue]: https://github.com/gribnoysup/setup-polly-jest/issues
 [pr]: https://github.com/gribnoysup/setup-polly-jest/pulls
