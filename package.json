@@ -7,10 +7,11 @@
     "build": "babel src --out-dir lib",
     "test:unit": "jest -c ./test/jest-unit.config.json",
     "test:jasmine": "JASMINE_CONFIG_PATH=./test/jasmine.config.json NODE_ENV=test jasmine",
-    "test:jest-jasmine2": "jest test/integration/**/*.test.js -c ./test/jest-jasmine-integration.config.json",
-    "test:jest-circus": "jest test/integration/**/*.test.js -c ./test/jest-circus-integration.config.json",
-    "test": "npm run build && npm run test:unit && npm run test:jest-jasmine2 && npm run test:jest-circus && npm run test:jasmine",
-    "prepare": "npm run test",
+    "test:jest-jasmine2": "jest -c ./test/jest-jasmine-integration.config.json",
+    "test:jest-circus": "jest -c ./test/jest-circus-integration.config.json",
+    "test": "npm run test:unit && npm run test:jest-jasmine2 && npm run test:jest-circus && npm run test:jasmine",
+    "clear": "rm -rf lib",
+    "prepare": "npm run clear && npm run build && npm run test",
     "prepublishOnly": "npm run prepare"
   },
   "files": [
