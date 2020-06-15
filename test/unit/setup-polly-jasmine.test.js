@@ -1,15 +1,12 @@
 import { Polly } from '@pollyjs/core';
-import { setupJasmine } from '../lib/jasmine/setupJasmine';
-
+import { setupPollyJasmine } from '../../lib/jasmine';
+import { JestPollyGlobals } from '../../lib/common';
 import {
   GlobalMock,
   beforeAndAfterFnsMock,
   testMock
 } from './__mocks__/global';
-
 import { PollyMock } from './__mocks__/polly';
-
-const { IS_POLLY_ACTIVE, IS_POLLY_ATTACHED } = setupJasmine;
 
 const mockDone = () => {
   const done = jest.fn();
@@ -17,25 +14,25 @@ const mockDone = () => {
   return done;
 };
 
-describe('setupJasmine', () => {
+describe('setupPollyJasmine', () => {
   afterEach(() => {
     testMock.mockClear();
     beforeAndAfterFnsMock.mockClear();
   });
 
-  it('should throw if jasmine env does not exist', () => {
-    expect(() => setupJasmine(PollyMock, {}, {})).toThrowError();
+  it('should return null if jasmine env does not exist', () => {
+    expect(setupPollyJasmine(PollyMock, {}, {})).toBe(null);
   });
 
   it('should fail the test in before hook when something went wrong', () => {
     const stub = new GlobalMock();
     const env = stub.jasmine.getEnv();
 
-    setupJasmine(
+    setupPollyJasmine(
+      {},
       function Polly() {
         throw new Error('whoops');
       },
-      {},
       stub
     );
 
@@ -57,7 +54,7 @@ describe('setupJasmine', () => {
     const stub = new GlobalMock();
     const env = stub.jasmine.getEnv();
 
-    setupJasmine(Polly, { persister: 'will-throw' }, stub);
+    setupPollyJasmine({ persister: 'will-throw' }, Polly, stub);
 
     stub.callBeforeAll();
 
@@ -82,18 +79,19 @@ describe('setupJasmine', () => {
   test.each(['it', 'fit'])('should override jasmine method `%s`', method => {
     const stub = new GlobalMock();
     const env = stub.jasmine.getEnv();
+    const globals = new JestPollyGlobals(stub);
 
     expect(env[method]).toBe(testMock);
 
-    expect(env[IS_POLLY_ATTACHED]).toBeUndefined();
-    expect(env[IS_POLLY_ACTIVE]).toBeUndefined();
+    expect(globals.isPollyAttached).toBeUndefined();
+    expect(globals.isPollyActive).toBeUndefined();
 
-    setupJasmine(PollyMock, {}, stub);
+    setupPollyJasmine({}, PollyMock, stub);
 
     expect(env[method]).not.toBe(testMock);
 
-    expect(env[IS_POLLY_ATTACHED]).toBe(true);
-    expect(env[IS_POLLY_ACTIVE]).toBe(false);
+    expect(globals.isPollyAttached).toBe(true);
+    expect(globals.isPollyActive).toBe(false);
   });
 
   test.each(['it', 'fit'])(
@@ -103,7 +101,7 @@ describe('setupJasmine', () => {
       const env = stub.jasmine.getEnv();
       const description = `test created with ${method}()`;
 
-      setupJasmine(PollyMock, {}, stub);
+      setupPollyJasmine({}, PollyMock, stub);
 
       stub.callBeforeAll();
 
@@ -125,7 +123,7 @@ describe('setupJasmine', () => {
       const stub = new GlobalMock();
       const env = stub.jasmine.getEnv();
 
-      setupJasmine(PollyMock, {}, stub);
+      setupPollyJasmine({}, PollyMock, stub);
 
       const testCase = env[method]('test case');
 
@@ -139,7 +137,7 @@ describe('setupJasmine', () => {
   it('should return context with polly', () => {
     const stub = new GlobalMock();
 
-    const context = setupJasmine(PollyMock, {}, stub);
+    const context = setupPollyJasmine({}, PollyMock, stub);
 
     expect(() => context.polly).toThrowError();
   });
@@ -153,7 +151,7 @@ describe('setupJasmine', () => {
       const stub = new GlobalMock();
       const env = stub.jasmine.getEnv();
 
-      const context = setupJasmine(PollyMock, pollyOptions, stub);
+      const context = setupPollyJasmine(pollyOptions, PollyMock, stub);
 
       stub.callBeforeAll();
 
@@ -175,7 +173,7 @@ describe('setupJasmine', () => {
     const stub = new GlobalMock();
     const env = stub.jasmine.getEnv();
 
-    const context = setupJasmine(PollyMock, {}, stub);
+    const context = setupPollyJasmine({}, PollyMock, stub);
 
     stub.callBeforeAll();
 
@@ -197,7 +195,7 @@ describe('setupJasmine', () => {
       const stub = new GlobalMock();
       const env = stub.jasmine.getEnv();
 
-      const context = setupJasmine(PollyMock, {}, stub);
+      const context = setupPollyJasmine({}, PollyMock, stub);
 
       stub.callBeforeAll();
 

@@ -2,7 +2,7 @@
  * This test suite is used to manually test that setupPolly throws meaningful
  * error messages when Polly is misconfigured or context is used incorrectly
  */
-const { setupPolly } = require('../');
+const { setupPolly } = require('../..');
 
 describe.skip('setupPolly with wrong config', () => {
   setupPolly({

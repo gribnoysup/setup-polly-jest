@@ -21,6 +21,8 @@ helpers for [PollyJS][]. If you used them before, this API should be familiar to
 you:
 
 ```js
+/** @jest-environment setup-polly-jest/jest-environment-node */
+
 import { setupPolly } from 'setup-polly-jest';
 
 describe('google.com', () => {
@@ -37,17 +39,13 @@ describe('google.com', () => {
     context.polly.configure({ recordIfMissing: true });
 
     /* start: pseudo test code */
-
     await visit('/');
-
     await fillIn('#search', 'Awesome HTTP stubbing');
-
     await submit();
 
     expect(document.getElementById('search-result').textContent).toBe(
       'PollyJS'
     );
-
     /* end: pseudo test code */
 
     /**
@@ -63,14 +61,40 @@ please refer to [PollyJS docs][polly-docs].
 
 For real-world examples, check out ["Jest + Node Fetch"][jest-node-fetch] or
 ["Jest + Puppeteer"][jest-puppeteer] examples in PollyJS docs or
-[tests](jest/index.test.js) in this repo
+[tests](jest/index.test.js) in this repo.
+
+## Supported Test Runners
+
+This library supports `jasmine`, `jest-jasmine2` (default in jest <= 26), and
+`jest-circus` (default in jest >= 27) [test runners][]. If you are using
+`setup-polly-jest` with `jest-circus` runner you need to specify [custom test
+environment][], either in the test file where you are planning to use
+`setupPolly`:
+
+```js
+/** @jest-environment setup-polly-jest/jest-environment-node */
+
+const context = setupPolly(/* ... */);
+```
+
+Or configure it for all your tests with `testEnvironment` config option
+
+```js
+// jest.config.js
+module.exports = {
+  testEnvironment: 'setup-polly-jest/jest-environment-jsdom'
+};
+```
+
+Both `node` and `jsdom` environments are provided by this library and can be
+safely used as a replacement for original `jest-environment-*` environments.
 
 ## Test Hook Ordering
 
 Accessing `context.polly` during a test run before the instance of Polly has
 been created or cleaned up produces the following error:
 
-!> You are trying to access an instance of Polly that is not available.
+!> You are trying to access an instance of Polly that is not yet available.
 
 If you need to do some work before the test run, you can access the instance of
 Polly in `beforeEach` hook. If you need to do some work before the instance of
@@ -81,22 +105,25 @@ describe('test', () => {
   const context = setupPolly();
 
   beforeEach(() => {
-    const { server } = context.polly;
-    server.get('/ping').intercept((req, res) => res.sendStatus(200));
+    context.polly.server
+      .get('/ping')
+      .intercept((req, res) => res.sendStatus(200));
   });
 
   it('does a thing', async () => {
     expect(await fetch('/ping').status).toBe(200);
   });
+
+  afterEach(() => context.polly.flush());
 });
 ```
 
 ## Caveats
 
 Although this library is thoroughly covered with unit and intergration tests,
-its implementation depends upon overwriting Jasmine environment. That means that
-some _major_ changes in how Jest or Jasmine run tests can lead to this library
-not working properly anymore.
+its implementation in jasmine environment depends upon overwriting Jasmine
+methods directly. That means that some _major_ changes in how Jest or Jasmine
+run tests can lead to this library not working properly anymore.
 
 ## Contributing
 
@@ -109,6 +136,9 @@ issue][issue] or submit a [pull-request][pr].
 [ISC](LICENSE)
 
 [pollyjs]: https://netflix.github.io/pollyjs/
+[test runners]: https://jestjs.io/docs/en/configuration#testrunner-string
+[custom test environment]:
+  https://jestjs.io/docs/en/configuration#testenvironment-string
 [mocha]: https://netflix.github.io/pollyjs/#/test-frameworks/mocha
 [qunit]: https://netflix.github.io/pollyjs/#/test-frameworks/qunit
 [polly-docs]: https://netflix.github.io/pollyjs/#/README

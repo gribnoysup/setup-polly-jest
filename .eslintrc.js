@@ -10,7 +10,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['{jest,jasmine,__mocks__}/**/*.js'],
+      files: ['{test,__mocks__}/**/*.js'],
       env: {
         jest: true
       }
