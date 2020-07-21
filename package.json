@@ -18,6 +18,8 @@
     "LICENSE",
     "README.md",
     "index.js",
+    "jest-environment-node.js",
+    "jest-environment-jsdom.js",
     "lib"
   ],
   "keywords": [
