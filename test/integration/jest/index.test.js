@@ -83,6 +83,16 @@ describe('setupPolly', () => {
       expect(response).toHaveProperty('title', 'Hello, world!');
     });
   });
+
+  describe('with skipped test', () => {
+    it('should record', async () => {
+      expect(await getPost(1)).toHaveProperty('id', 1);
+    });
+
+    it.skip('should not break the suite and should not record', async () => {
+      expect(await getPost(2)).toHaveProperty('id', 2);
+    });
+  });
 });
 
 describe('another describe', () => {
