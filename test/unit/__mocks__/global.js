@@ -64,3 +64,9 @@ export class GlobalMock {
     this.befores.forEach(fn => fn());
   }
 }
+
+export function MockDoneFn() {
+  const spy = jest.fn();
+  spy.fail = jest.fn();
+  return spy;
+}

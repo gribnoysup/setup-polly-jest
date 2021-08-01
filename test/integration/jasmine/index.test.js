@@ -1,13 +1,5 @@
-const fetch = require('node-fetch');
 const { setupPolly, JestPollyGlobals } = require('../../..');
-
-const getPost = async id => {
-  const response = await fetch(
-    `https://jsonplaceholder.typicode.com/posts/${id}`
-  );
-  const json = await response.json();
-  return Object.assign(json, { ok: response.ok, status: response.status });
-};
+const { getPost } = require('../../getPost');
 
 const globals = new JestPollyGlobals();
 

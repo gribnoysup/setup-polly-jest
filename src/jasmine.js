@@ -93,7 +93,14 @@ function createTestFnProxy(PollyConstructor, fn, jasmineEnv, ctx) {
        */
       const { befores, afters } = specHooks.apply(spec, arguments);
 
-      const before = async function before(done) {
+      /**
+       * NB: Using `done` and `done.fail` so that we support jasmine2 that
+       * doesn't handle returned promises in before/after and also passing
+       * `error` to `done` in some versions
+       * 
+       * @type {JasmineSpec['queueableFn']['fn']} done
+       */
+      const before = function before(done) {
         try {
           if (globals.isPollyActive) {
             const topSuite = jasmineEnv.topSuite();
@@ -113,25 +120,30 @@ function createTestFnProxy(PollyConstructor, fn, jasmineEnv, ctx) {
             );
           }
 
-          done && done();
+          done();
         } catch (error) {
           // If we caught instance of the polly error, we will save it for the
           // reference and continue with the tests to print the error at the end
           // of the spec where it's more visible
           if (error.name === 'PollyError') {
             pollyError = error;
-            done && done();
-          } else if (done) {
-            // Otherwise let's just fail spec/throw error, there is nothing
-            // special we can do in that case
-            done.fail(error);
+            done();
           } else {
-            throw error;
+            // Otherwise let's just fail spec, there is nothing special we can
+            // do in that case
+            done.fail(error);
           }
         }
       };
 
-      const after = async function after(done) {
+      /**
+       * NB: Using `done` and `done.fail` so that we support jasmine2 that
+       * doesn't handle returned promises in before/after and also passing
+       * `error` to `done` in some versions
+       * 
+       * @type {JasmineSpec['queueableFn']['fn']} done
+       */
+      const after = function after(done) {
         try {
           // We want to throw polly error here so it's shown as the last one in the
           // list of possible errors that happend during the test run
@@ -144,17 +156,15 @@ function createTestFnProxy(PollyConstructor, fn, jasmineEnv, ctx) {
           }
 
           if (globals.pollyContext.polly) {
-            await globals.pollyContext.polly.stop();
-            globals.pollyContext.polly = null;
-          }
-
-          done && done();
-        } catch (error) {
-          if (done) {
-            done.fail(error);
+            globals.pollyContext.polly.stop().then(() => {
+              globals.pollyContext.polly = null;
+              done();
+            });
           } else {
-            throw error;
+            done();
           }
+        } catch (error) {
+          done.fail(error);
         }
       };
 

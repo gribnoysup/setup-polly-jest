@@ -4,15 +4,10 @@ import { JestPollyGlobals } from '../../lib/common';
 import {
   GlobalMock,
   beforeAndAfterFnsMock,
-  testMock
+  testMock,
+  MockDoneFn
 } from './__mocks__/global';
 import { PollyMock } from './__mocks__/polly';
-
-const mockDone = () => {
-  const done = jest.fn();
-  done.fail = jest.fn();
-  return done;
-};
 
 describe('setupPollyJasmine', () => {
   afterEach(() => {
@@ -42,7 +37,7 @@ describe('setupPollyJasmine', () => {
 
     const { fn: before } = testCase.beforeAndAfterFns().befores[0];
 
-    const done = mockDone();
+    const done = new MockDoneFn();
 
     before(done);
 
@@ -63,7 +58,7 @@ describe('setupPollyJasmine', () => {
     const { fn: before } = testCase.beforeAndAfterFns().befores[0];
     const { fn: after } = testCase.beforeAndAfterFns().afters[0];
 
-    const done = mockDone();
+    const done = new MockDoneFn();
 
     before(done);
 
@@ -145,7 +140,7 @@ describe('setupPollyJasmine', () => {
   test.each(['it', 'fit'])(
     'should create instance of polly when before hook is called for `%s` test',
     method => {
-      const done = jest.fn();
+      const done = new MockDoneFn();
       const pollyOptions = {};
 
       const stub = new GlobalMock();
@@ -181,7 +176,7 @@ describe('setupPollyJasmine', () => {
 
     const { befores } = testCase.beforeAndAfterFns();
 
-    befores[0].fn();
+    befores[0].fn(new MockDoneFn());
 
     expect(context.polly.name).toMatchInlineSnapshot(
       `"suite1 description/special_test_id_to_test_name_generation"`
@@ -191,7 +186,7 @@ describe('setupPollyJasmine', () => {
   test.each(['it', 'fit'])(
     'should stop polly and remove it from context when after hook is called for `%s` test',
     async method => {
-      const done = jest.fn();
+      const done = new MockDoneFn();
       const stub = new GlobalMock();
       const env = stub.jasmine.getEnv();
 
