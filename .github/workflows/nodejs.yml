@@ -1,13 +1,13 @@
-name: Node CI
+name: Node.JS CI
 
 on:
   push:
-    branches: 
-      - master
+    branches:
+      - main
 
   pull_request:
-    branches: 
-      - master
+    branches:
+      - main
 
 jobs:
   build:
@@ -18,26 +18,59 @@ jobs:
 
     strategy:
       matrix:
-        # jest >= 26 does not support node8 anymore so it is removed from the 
-        # test matrix
-        # node-version: [8.x, 10.x, 12.x]
-        node-version: [10.x, 12.x]
+        node_version: [8, 10, 12, 14]
+        test_framework: [jasmine@2, jasmine@3, jest@25, jest@latest]
+      fail-fast: false
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v2
+        with:
+          node_version: ${{ matrix.node_version }}
 
-    - name: Install dependencies
-      run: |
-        rm -rf node_modules
-        # We don't have package-lock file in the repo so will be installing
-        # with good ol `install` and not `ci`
-        # npm ci
-        npm install
+      - name: Install dependencies
+        run: |
+          npm install
 
-    - name: Run test suite
-      run: npm run test
+      - name: Install ${{ matrix.test_framework }}
+        run: |
+          npm install ${{ matrix.test_framework }}
+
+      - name: Install jest-circus@25
+        if: ${{ matrix.test_framework == 'jest@25' }}
+        run: |
+          npm install jest-circus@25
+
+      - name: Install jest-circus@latest
+        if: ${{ matrix.test_framework == 'jest@latest' }}
+        run: |
+          npm install jest-circus@latest
+
+      - name: Run unit tests
+        run: |
+          npm run test:unit
+
+      - name: Run jasmine tests
+        if:
+          ${{ matrix.test_framework == 'jasmine@2' || matrix.test_framework ==
+          'jasmine@3' }}
+        run: |
+          npm run test:jasmine
+
+      - name: Run jest-jasmine tests
+        # jest doesn't support node v8
+        if:
+          ${{ (matrix.test_framework == 'jest@25' || matrix.test_framework ==
+          'jest@latest') && matrix.node_version > 8 }}
+        run: |
+          npm run test:jest-jasmine2
+
+      - name: Run jest-circus tests
+        # jest doesn't support node v8
+        if:
+          ${{ (matrix.test_framework == 'jest@25' || matrix.test_framework ==
+          'jest@latest') && matrix.node_version > 8 }}
+        run: |
+          npm run test:jest-circus

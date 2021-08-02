@@ -11,8 +11,8 @@
     "test:jest-circus": "jest -c ./test/jest-circus-integration.config.json",
     "test": "npm run test:unit && npm run test:jest-jasmine2 && npm run test:jest-circus && npm run test:jasmine",
     "clear": "rm -rf lib",
-    "prepare": "npm run clear && npm run build && npm run test",
-    "prepublishOnly": "npm run prepare"
+    "prepare": "npm run clear && npm run build",
+    "prepublishOnly": "npm run test"
   },
   "files": [
     "LICENSE",
@@ -58,6 +58,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/gribnoysup/setup-polly-jest"
-  },
-  "dependencies": {}
+  }
 }

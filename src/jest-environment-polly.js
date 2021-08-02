@@ -59,12 +59,17 @@ export function PollyEnvironmentFactory(
     }
 
     /**
-     *
      * @param {CircusEvent} event
      * @param {CircusState} state
      */
+    // TS types demand that this is an instance property, not a prototype method
+    // @ts-expect-error
     async handleTestEvent(event, state) {
       if (super.handleTestEvent) {
+        // TS is confused because we are explicitly awaiting (to cover both
+        // sync and async handlers) but it really wants us to handle only one
+        // of those
+        // @ts-expect-error
         await super.handleTestEvent(event, state);
       }
 
@@ -81,8 +86,13 @@ export function PollyEnvironmentFactory(
         );
       }
 
-      // Stop Polly instance if there is one running
-      if (event.name === 'test_done' && this.pollyGlobals.pollyContext.polly) {
+      // Stop Polly instance if there is one running. We check `skip` in
+      // addition to done because specs emit `test_start` even when they will be
+      // then skipped
+      if (
+        ['test_done', 'test_skip'].includes(event.name) &&
+        this.pollyGlobals.pollyContext.polly
+      ) {
         await this.pollyGlobals.pollyContext.polly.stop();
         this.pollyGlobals.pollyContext.polly = null;
       }

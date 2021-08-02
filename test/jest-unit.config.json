@@ -1,5 +1,4 @@
 {
   "rootDir": "../",
-  "testMatch": ["<rootDir>/test/unit/**/*.test.js"],
-  "testRunner": "jest-circus/runner"
+  "testMatch": ["<rootDir>/test/unit/**/*.test.js"]
 }
