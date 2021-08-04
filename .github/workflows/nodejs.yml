@@ -49,6 +49,8 @@ jobs:
           npm install jest-circus@latest
 
       - name: Run unit tests
+        # We are running unit tests with jest and it doesn't support Node.js v8
+        if: ${{ matrix.node_version > 8 }}
         run: |
           npm run test:unit
 
