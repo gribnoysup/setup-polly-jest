@@ -18,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        node_version: [8, 10, 12, 14]
+        node_version: [10, 12, 14, 16]
         test_framework: [jasmine@2, jasmine@3, jest@25, jest@latest]
       fail-fast: false
 
@@ -49,30 +49,23 @@ jobs:
           npm install jest-circus@latest
 
       - name: Run unit tests
-        # We are running unit tests with jest and it doesn't support Node.js v8
-        if: ${{ matrix.node_version > 8 }}
         run: |
           npm run test:unit
 
       - name: Run jasmine tests
         if:
-          ${{ matrix.test_framework == 'jasmine@2' || matrix.test_framework ==
-          'jasmine@3' }}
+          ${{ matrix.test_framework == 'jasmine@2' || matrix.test_framework == 'jasmine@3' }}
         run: |
           npm run test:jasmine
 
       - name: Run jest-jasmine tests
-        # jest doesn't support node v8
         if:
-          ${{ (matrix.test_framework == 'jest@25' || matrix.test_framework ==
-          'jest@latest') && matrix.node_version > 8 }}
+          ${{ matrix.test_framework == 'jest@25' || matrix.test_framework == 'jest@latest' }}
         run: |
           npm run test:jest-jasmine2
 
       - name: Run jest-circus tests
-        # jest doesn't support node v8
         if:
-          ${{ (matrix.test_framework == 'jest@25' || matrix.test_framework ==
-          'jest@latest') && matrix.node_version > 8 }}
+          ${{ matrix.test_framework == 'jest@25' || matrix.test_framework == 'jest@latest' }}
         run: |
           npm run test:jest-circus
