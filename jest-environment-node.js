@@ -1,4 +1,4 @@
-const NodeEnvironment = require('jest-environment-node');
+const NodeEnvironment = require('jest-environment-node').default;
 const { PollyEnvironmentFactory } = require('./lib/jest-environment-polly');
 
 class PollyEnvironmentNode extends PollyEnvironmentFactory(NodeEnvironment) {}
