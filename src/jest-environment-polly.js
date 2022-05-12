@@ -89,8 +89,9 @@ export function PollyEnvironmentFactory(
       // Stop Polly instance if there is one running. We check `skip` in
       // addition to done because specs emit `test_start` even when they will be
       // then skipped
+      // Include `teardown` as a fail-safe.
       if (
-        ['test_done', 'test_skip'].includes(event.name) &&
+        ['teardown', 'test_done', 'test_skip'].includes(event.name) &&
         this.pollyGlobals.pollyContext.polly
       ) {
         await this.pollyGlobals.pollyContext.polly.stop();
