@@ -49,6 +49,7 @@
     "jest-circus": "*",
     "jest-environment-jsdom": "*",
     "jest-environment-node": "*",
+    "jest-jasmine2": "*",
     "node-fetch": "^2.2.0",
     "prettier": "^1.14.3"
   },
