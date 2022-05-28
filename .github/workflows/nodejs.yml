@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         node_version: [12, 14, 16, 18]
-        test_framework: [jasmine@2, jasmine@3, jest@25, jest@latest]
+        test_framework: [jasmine@2, jasmine@latest, jest@25, jest@latest]
       fail-fast: false
 
     steps:
@@ -38,15 +38,12 @@ jobs:
         run: |
           npm install ${{ matrix.test_framework }}
 
-      - name: Install jest-circus@25
+      - name: Install jest@25 deps
         if: ${{ matrix.test_framework == 'jest@25' }}
         run: |
           npm install jest-circus@25
-
-      - name: Install jest-circus@latest
-        if: ${{ matrix.test_framework == 'jest@latest' }}
-        run: |
-          npm install jest-circus@latest
+          npm install jest-environment-jsdom@25
+          npm install jest-environment-node@25
 
       - name: Run unit tests
         run: |
@@ -54,18 +51,18 @@ jobs:
 
       - name: Run jasmine tests
         if:
-          ${{ matrix.test_framework == 'jasmine@2' || matrix.test_framework == 'jasmine@3' }}
+          ${{ startsWith(matrix.test_framework, 'jasmine') }}
         run: |
           npm run test:jasmine
 
       - name: Run jest-jasmine tests
         if:
-          ${{ matrix.test_framework == 'jest@25' || matrix.test_framework == 'jest@latest' }}
+          ${{ startsWith(matrix.test_framework, 'jest') }}
         run: |
           npm run test:jest-jasmine2
 
       - name: Run jest-circus tests
         if:
-          ${{ matrix.test_framework == 'jest@25' || matrix.test_framework == 'jest@latest' }}
+          ${{ startsWith(matrix.test_framework, 'jest') }}
         run: |
           npm run test:jest-circus
