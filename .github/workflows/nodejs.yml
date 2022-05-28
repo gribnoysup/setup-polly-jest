@@ -18,7 +18,7 @@ jobs:
 
     strategy:
       matrix:
-        node_version: [10, 12, 14, 16]
+        node_version: [12, 14, 16, 18]
         test_framework: [jasmine@2, jasmine@3, jest@25, jest@latest]
       fail-fast: false
 

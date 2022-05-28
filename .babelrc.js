@@ -7,8 +7,8 @@ module.exports = {
         corejs: 3,
         targets: {
           // We are matching the supported version of pollyjs here:
-          // https://github.com/Netflix/pollyjs/blob/bd3f8196775dbdd424836aa7a8dffa6aa7adafc8/.travis.yml#L2-L4
-          node: '10.0.0'
+          // https://github.com/Netflix/pollyjs/blob/2d7f0f33d9f552e78f0dfe81179751b4692357be/.travis.yml#L1-L5
+          node: '12'
         }
       }
     ]
