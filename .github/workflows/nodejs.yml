@@ -19,7 +19,14 @@ jobs:
     strategy:
       matrix:
         node_version: [12, 14, 16, 18]
-        test_framework: [jasmine@2, jasmine@latest, jest@25, jest@latest]
+        test_framework: [
+          jasmine@2,
+          jasmine@3,
+          # TODO: Broken due to internal breaking changes in jasmine
+          # jasmine@latest,
+          jest@25,
+          jest@latest
+        ]
       fail-fast: false
 
     steps:
